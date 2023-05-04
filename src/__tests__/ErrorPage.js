@@ -20,6 +20,7 @@ describe('Given I am connected on app (as an Employee or an HR admin)', () => {
       const html = ErrorPage(error)
       document.body.innerHTML = html
       expect(screen.getAllByText(error)).toBeTruthy()
+      
     })
   })
 })
