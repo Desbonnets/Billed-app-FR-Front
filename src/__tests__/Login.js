@@ -196,7 +196,13 @@ describe("Given that I am a user on login page", () => {
 
       let PREVIOUS_LOCATION = "";
 
-      const store = jest.fn();
+      //const store = jest.fn();
+      const store = {
+        users: jest.fn(() => ({
+          create: jest.fn().mockResolvedValue()
+        })),
+        login: jest.fn().mockResolvedValue({ jwt: 'mocked_jwt' })
+      };
 
       const login = new Login({
         document,
@@ -221,10 +227,193 @@ describe("Given that I am a user on login page", () => {
           status: "connected",
         })
       );
+      expect(store.login).toHaveBeenCalledWith({
+        type: 'Admin',
+        email: 'admin@example.com',
+        password: 'password123',
+        status: 'connected'
+      });
+      expect(store.createUser).toHaveBeenCalledWith({
+        type: 'Admin',
+        email: 'admin@example.com',
+        password: 'password123',
+        status: 'connected'
+      });
     });
 
     test("It should renders HR dashboard page", () => {
       expect(screen.queryByText("Validations")).toBeTruthy();
+    });
+  });
+
+  describe("Quand je céer un User grace a l'API", () => {
+    test('Si les données API sont valide', () => {
+      document.body.innerHTML = LoginUI();
+      Object.defineProperty(window, "localStorage", {
+        value: {
+          getItem: jest.fn(() => null),
+          setItem: jest.fn(() => null),
+        },
+        writable: true,
+      });
+  
+      const onNavigate = (pathname) => {
+        document.body.innerHTML = ROUTES({ pathname });
+      };
+  
+      let PREVIOUS_LOCATION = "";
+      const store = {
+        users: jest.fn(() => ({
+          create: jest.fn().mockResolvedValue()
+        }))
+      };
+  
+      const login = new Login({
+        document,
+        localStorage: window.localStorage,
+        onNavigate,
+        PREVIOUS_LOCATION,
+        store,
+      });
+      login.login = jest.fn().mockResolvedValue({});
+  
+      const user = {
+        type: 'Admin',
+        email: 'test@example.com',
+        password: 'password123'
+      };
+  
+      return login.createUser(user)
+        .then(() => {
+          expect(store.users().create).toHaveBeenCalledWith({
+            data: JSON.stringify({
+              type: 'Admin',
+              name: 'test',
+              email: 'test@example.com',
+              password: 'password123'
+            })
+          });
+          expect(login.login).toHaveBeenCalledWith(user);
+        });
+    });
+    test('Si les données API sont non renseigner', () => {
+      document.body.innerHTML = LoginUI();
+      Object.defineProperty(window, "localStorage", {
+        value: {
+          getItem: jest.fn(() => null),
+          setItem: jest.fn(() => null),
+        },
+        writable: true,
+      });
+  
+      const onNavigate = (pathname) => {
+        document.body.innerHTML = ROUTES({ pathname });
+      };
+  
+      let PREVIOUS_LOCATION = "";
+  
+      const store = null;
+  
+      const login = new Login({
+        document,
+        localStorage: window.localStorage,
+        onNavigate,
+        PREVIOUS_LOCATION,
+        store,
+      });
+  
+      // Define the user object
+      const user = {
+        type: 'regular',
+        email: 'test@example.com',
+        password: 'password123'
+      };
+  
+      // Call the createUser function
+      const result = login.createUser(user);
+  
+      // Check if the result is null
+      expect(result).toBeNull();
+    });
+  });
+
+  describe("Quand je me connecte grace a l'API", () => {
+    test('Si les données API sont valide', () => {
+      document.body.innerHTML = LoginUI();
+      Object.defineProperty(window, "localStorage", {
+        value: {
+          getItem: jest.fn(() => null),
+          setItem: jest.fn(() => null),
+        },
+        writable: true,
+      });
+  
+      const onNavigate = (pathname) => {
+        document.body.innerHTML = ROUTES({ pathname });
+      };
+  
+      let PREVIOUS_LOCATION = "";
+  
+      const store = {
+        login: jest.fn().mockResolvedValue({ jwt: 'mocked_jwt' })
+      };
+  
+      const login = new Login({
+        document,
+        localStorage: window.localStorage,
+        onNavigate,
+        PREVIOUS_LOCATION,
+        store,
+      });
+    
+      const user = {
+        email: 'test@example.com',
+        password: 'password123'
+      };
+    
+      return login.login(user)
+        .then(() => {
+          expect(store.login).toHaveBeenCalledWith(JSON.stringify({
+            email: 'test@example.com',
+            password: 'password123'
+          }));
+          expect(localStorage.setItem).toHaveBeenCalledWith('jwt', 'mocked_jwt');
+        });
+    });
+    test('Si les données API sont non renseigner', () => {
+      document.body.innerHTML = LoginUI();
+      Object.defineProperty(window, "localStorage", {
+        value: {
+          getItem: jest.fn(() => null),
+          setItem: jest.fn(() => null),
+        },
+        writable: true,
+      });
+  
+      const onNavigate = (pathname) => {
+        document.body.innerHTML = ROUTES({ pathname });
+      };
+  
+      let PREVIOUS_LOCATION = "";
+  
+      const store = null
+  
+      const login = new Login({
+        document,
+        localStorage: window.localStorage,
+        onNavigate,
+        PREVIOUS_LOCATION,
+        store,
+      });
+    
+      const user = {
+        email: 'test@example.com',
+        password: 'password123'
+      };
+    
+      const result = login.login(user);
+    
+      expect(result).toBeNull();
     });
   });
 });
