@@ -9,10 +9,26 @@ import Bills from "../containers/Bills.js"
 import { bills } from "../fixtures/bills.js"
 import { ROUTES, ROUTES_PATH } from "../constants/routes.js";
 import { localStorageMock } from "../__mocks__/localStorage.js";
-import { StoreMock } from "../__mocks__/store.js";
+import StoreMock from "../__mocks__/store.js";
+import { formatDate, formatStatus } from "../app/format.js";
 import { Store } from "../app/Store.js";
 
 import router from "../app/Router.js";
+
+function getBillsClass() {
+  const html = BillsUI({ data: bills });
+  const onNavigate = (pathname) => {
+    document.body.innerHTML = ROUTES({ pathname });
+  };
+  document.body.innerHTML = html;
+  const BillsClass = new Bills({
+    document,
+    onNavigate,
+    store: StoreMock,
+    localStorage: window.localStorage,
+  });
+  return BillsClass;
+}
 
 describe("Given I am connected as an employee", () => {
   describe("When I am on Bills Page", () => {
@@ -56,12 +72,12 @@ describe("Given I am connected as an employee", () => {
           Store,
           localStorage: window.localStorage,
         });
-  
+
         const handleClickNewBill = jest.fn(BillsClass.handleClickNewBill);
         const button = screen.getByTestId('btn-new-bill');
-  
+
         button.addEventListener('click', handleClickNewBill);
-  
+
         userEvent.click(button);
         //vérifie si on click dessus
         expect(handleClickNewBill).toHaveBeenCalled();
@@ -102,56 +118,46 @@ describe("Given I am connected as an employee", () => {
           expect(modale).toBeTruthy();
           expect($.fn.modal).toHaveBeenCalled();
         });
-  
+
       });
     });
 
-    describe("Lorsque l'application essaie de récupérer des données à partir de l'API", () => {
-      //describe('When it succeed', () => {
-        test('Ensuite, il devrait retourner un tableau avec la longueur correspondante', async () => {
-          //const listBill = jest.spyOn(StoreMock, 'list');
-          // Espionner la méthode then de la Promise
-          const myPromise = jest.fn(StoreMock.list());
-          const thenSpy = jest.spyOn(myPromise.list(), 'then');
+    describe('getBills', () => {
+      test('should return bills sorted by date', async () => {
+        let BillsClass = getBillsClass();
+        BillsClass.getBills = jest.fn(BillsClass.getBills)
+        const result = await BillsClass.getBills();
 
-          // Espionner la méthode catch de la Promise
-          const catchSpy = jest.spyOn(myPromise.list(), 'catch');
-
-          // Espionner la méthode finally de la Promise
-          const finallySpy = jest.spyOn(myPromise.list(), 'finally');
-          //const bills = StoreMock;
-          //console.log(StoreMock)
-
-          // Utiliser les espions pour vérifier les appels ou modifier le comportement
-          expect(thenSpy).toHaveBeenCalled();
-          expect(catchSpy).toHaveBeenCalledTimes(2);
-          finallySpy.mockImplementation(() => console.log('finally appelé'));
-
-          // Restaurer les méthodes d'origine
-          thenSpy.mockRestore();
-          catchSpy.mockRestore();
-          finallySpy.mockRestore();
-
-          /*const html = BillsUI({ data: bills });
-          document.body.innerHTML = html;
-          const onNavigate = (pathname) => {
-            document.body.innerHTML = ROUTES({ pathname });
+        let mockBills = await jest.spyOn(StoreMock.bills(), 'list')();
+        let expectedBills = mockBills.map((bill) => {
+          return {
+            ...bill,
+            date: formatDate(bill.date), // Convertir la date en objet Date
+            status: formatStatus(bill.status) // Convertir le statut en majuscules
           };
-          const BillsClass = new Bills({
-            document,
-            onNavigate,
-            Store,
-            localStorage: window.localStorage,
-          });
-        
-          // Créer une fonction mock pour handleClickNewBill
-          const getBillsMock = jest.fn(BillsClass.getBills);
-          //console.log(getBillsMock)
-  
-          //expect(listBill).toHaveBeenCalledTimes(1);
-  
-          //expect(bills.data.length).toBe(4);*/
         });
+
+        expect(BillsClass.getBills).toHaveBeenCalledTimes(1);
+        expect(result[0]).toEqual(expectedBills[0]);
+      });
+
+      test('should handle error in formatting date', async () => {
+        let BillsClass = getBillsClass();
+        BillsClass.getBills = jest.fn(BillsClass.getBills)
+        const result = await BillsClass.getBills();
+
+        let mockBills = await jest.spyOn(StoreMock.bills(), 'list')();
+        let expectedBills = mockBills.map((bill) => {
+          return {
+            ...bill,
+            status: formatStatus(bill.status) // Convertir le statut en majuscules
+          };
+        });
+
+        expect(BillsClass.getBills).toHaveBeenCalledTimes(1);
+        expect(result[0]).not.toEqual(expectedBills[0]);
+      });
+
     });
   })
 })
