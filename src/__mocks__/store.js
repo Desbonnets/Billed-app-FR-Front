@@ -91,3 +91,30 @@ export default {
   },
 }
 
+export let StoreMock = {
+  bills() {
+    return mockedBills
+    //return {}
+  },
+}
+
+const mockedBillsReject = {
+  list() {
+    return Promise.reject('List error')
+
+  },
+  create(bill) {
+    return Promise.reject('Create error')
+  },
+  update(bill) {
+    return Promise.reject("Update error")
+  },
+}
+
+export let reject = {
+  bills() {
+    return mockedBillsReject
+    //return {}
+  },
+}
+
