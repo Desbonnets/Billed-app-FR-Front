@@ -266,21 +266,21 @@ describe("Given I am connected as an employee", () => {
 		});
 
 		test('should handle error', async () => {
+
 			const mockBill = StoreMock.bills().list()[0];
-			// const expectedError = new Error('Update error');
-			// const consoleErrorSpy = jest.spyOn(console, 'error');
+			const expectedError = new Error('Update error');
+			let consoleErrorSpy = jest.spyOn(console, 'error');
 			NewBillClass.store = reject;
 
 			let updateBill = jest.fn((bill) => NewBillClass.updateBill(bill));
+			updateBill(mockBill);
 
-			await updateBill(mockBill);
-
-			// expect(consoleErrorSpy).toHaveBeenCalledWith(expect.any(Error));
+			// Vérifiez que la fonction .catch a été appelée avec l'erreur attendue
+			// expect(consoleErrorSpy).toHaveBeenCalled();
+			// expect(consoleErrorSpy).toHaveBeenCalledWith(expectedError);
 
 			// Rétablissez le comportement d'origine de console.error
-    		// consoleErrorSpy.mockRestore();
-			// Vérifiez si la console affiche l'erreur
-			// expect(console.error).toHaveBeenCalledWith('Update error');
+			consoleErrorSpy.mockRestore();
 		});
 	});
 })
